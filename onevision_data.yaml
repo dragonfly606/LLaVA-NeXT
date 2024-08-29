@@ -1,0 +1,5 @@
+datasets:
+    - json_path: /data/public_datasets/converted_llava_one_vision/ai2d(cauldron,llava_format)_train.json
+      sampling_strategy: all
+    # - json_path: /data/public_datasets/converted_llava_one_vision/ai2d(gpt4v)_train.json
+    #   sampling_strategy: all

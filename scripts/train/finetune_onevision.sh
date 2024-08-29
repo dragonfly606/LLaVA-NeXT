@@ -1,15 +1,19 @@
-export OMP_NUM_THREADS=8
+export OMP_NUM_THREADS=2
 export NCCL_IB_DISABLE=0
 export NCCL_IB_GID_INDEX=3
 export NCCL_SOCKET_IFNAME=eth0
 export NCCL_DEBUG=INFO
 
-LLM_VERSION="Qwen/Qwen2-7B-Instruct" 
+LLM_VERSION="Qwen/Qwen2-7B-Instruct"
 # for 7b model we recommend bs=1, accum=2, 16 nodes, 128 gpus, lr=1e-5, warmup=0.03
 # for 72b model we recommend bs=1, accum=1, 32 nodes, 256 gpus, lr=1e-5, warmup=0.03
 LLM_VERSION_CLEAN="${LLM_VERSION//\//_}"
 VISION_MODEL_VERSION="google/siglip-so400m-patch14-384"
 VISION_MODEL_VERSION_CLEAN="${VISION_MODEL_VERSION//\//_}"
+
+NUM_GPUS=2
+NNODES=1
+MID_RUN_NAME='test'
 
 ############### Pretrain ################
 
@@ -20,15 +24,14 @@ echo "BASE_RUN_NAME: ${BASE_RUN_NAME}"
 
 CKPT_PATH=$LLM_VERSION # this could also be the previous stage checkpoint
 
-ACCELERATE_CPU_AFFINITY=1 torchrun --nproc_per_node="${NUM_GPUS}" --nnodes="${NNODES}" --node_rank="${RANK}" --master_addr="${ADDR}" --master_port="${PORT}" \
+ACCELERATE_CPU_AFFINITY=1 torchrun --nproc_per_node="${NUM_GPUS}" --nnodes="${NNODES}" \
     llava/train/train_mem.py \
     --deepspeed scripts/zero3.json \
     --model_name_or_path ${CKPT_PATH} \
     --version ${PROMPT_VERSION} \
     --data_path ./onevision_data.yaml \
-    --image_folder ./onevision_data/images \
-    --video_folder ./onevision_data/videos \
-    --pretrain_mm_mlp_adapter="/checkpoints/projectors/${BASE_RUN_NAME}/mm_projector.bin" \
+    --image_folder /data/public_datasets/converted_llava_one_vision \
+    --pretrain_mm_mlp_adapter="/data/public_datasets/llava-onevision-projectors/7b/mm_projector.bin" \
     --mm_tunable_parts="mm_vision_tower,mm_mlp_adapter,mm_language_model" \
     --mm_vision_tower_lr=2e-6 \
     --vision_tower ${VISION_MODEL_VERSION} \
